@@ -1,12 +1,12 @@
-from django.urls import path, include
+from django.urls import path
 
-from book import admin
-# from book.views import UserList
-from book.views import BookList
-
+from book.views import BookListApiView, BookCreateApiView, BookDetailApiView, BookUpdateApiView, BookDeleteApiView
 
 urlpatterns = [
-    # path('all/users/',UserList.as_view(), name='index')
-    path('all/books/',BookList.as_view(), name='book_list'),
-    # path('admin/', admin.site.urls),
+
+    path('all/books/', BookListApiView.as_view(), name='index'),
+    path('create/book/', BookCreateApiView.as_view(), name='create_book'),
+    path('all/books/<int:pk>/', BookDetailApiView.as_view(), name='detail'),
+    path('update/book/<int:pk>/', BookUpdateApiView.as_view(), name='update'),
+    path('delete/book/<int:pk>/', BookDeleteApiView.as_view(), name='delete')
 ]
