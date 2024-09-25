@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from olcha.models import Category, Group, Product, ProductAttributeValue, ProductImage
+from olcha.models import Category, Group, Product, ProductAttributeValue, ProductImage, Image, Comment
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -46,6 +46,12 @@ class ProductSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'slug']
 
 
+class ImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Image
+        fields = '__all__'
+
+
 class GroupSerializer(serializers.ModelSerializer):
     products = ProductSerializer(many=True, read_only=True)
 
@@ -61,4 +67,14 @@ class CategoriesGroupsProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'title', 'image', 'slug', 'groups']
-        read_only_fields = ['id', 'slug']
+        read_only_fields = ['id', 'slug']\
+
+class CommentSerializer(serializers.ModelSerializer):
+    comments_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ['message', 'file', 'rating', 'user', 'created_at', 'comments_count']
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()

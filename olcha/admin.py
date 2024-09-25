@@ -1,5 +1,5 @@
 from django.contrib import admin
-from olcha.models import Product, Category, Group, ProductImage
+from olcha.models import Product, Category, Group, ProductImage,Comment
 
 # Register your models here.
 
@@ -33,3 +33,7 @@ class ProductImageAdmin(admin.ModelAdmin):
 
 
 
+@admin.register(Comment)
+class ProductImageAdmin(admin.ModelAdmin):
+    list_display = ['id', 'rating', 'product', 'user', 'image', 'text']
+    search_fields = ['product']
