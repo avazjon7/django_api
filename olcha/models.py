@@ -1,10 +1,9 @@
-from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator,MaxValueValidator
+from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.text import slugify
 
-
-# Create your models here.
+from book.models import User
 
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -15,14 +14,14 @@ class BaseModel(models.Model):
 
 
 class Category(BaseModel):
-    title = models.CharField(max_length=200, null=True, blank=True, unique=True)
-    image = models.ImageField(upload_to='category/%Y/%m/%d/', null=True, blank=True)
-    slug = models.SlugField(max_length=255, null=True, blank=True)
+    title = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(blank=True)
+    image = models.ImageField(upload_to='category/%Y/%m/%d/', blank=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)
-        super(Category, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
@@ -31,67 +30,79 @@ class Category(BaseModel):
         verbose_name_plural = 'Categories'
 
 
-class Group(models.Model):
-    title = models.CharField(max_length=100)  # Ensure this field exists
-    slug = models.SlugField(unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.title
+class Group(BaseModel):
+    title = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    slug = models.SlugField(blank=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='groups', null=True)
+    image = models.ImageField(upload_to='group/%Y/%m/%d/', blank=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)
-        super(Group, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name_plural = 'Groups'
 
 
-class Product(models.Model):
-    title = models.CharField(max_length=100)  # Ensure this field exists
-    slug = models.SlugField(unique=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    discount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Ensure this field exists
-    created_at = models.DateTimeField(auto_now_add=True)
+class Product(BaseModel):
+    title = models.CharField(max_length=100)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='products')
+    slug = models.SlugField(unique=True, blank=True)
+    description = models.TextField(blank=True)
+    price = models.FloatField(blank=True)
+    discount = models.PositiveIntegerField(default=0, blank=True)
+    quantity = models.PositiveIntegerField(default=0, blank=True)
+    users_like = models.ManyToManyField(User, related_name='products')
 
+    @property
+    def discounted_price(self):
+        return self.price * (1 - self.discount / 100) if self.discount else self.price
 
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)
-        super(Product, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        verbose_name_plural = 'Products'
 
 
 class Image(BaseModel):
-    image = models.ImageField(upload_to='image/%Y/%m/%d/', null=True, blank=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    image = models.ImageField(upload_to='products/images/', blank=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
     is_primary = models.BooleanField(default=False)
+
+    @property
+    def is_primary_image(self):
+        return self.image if self.is_primary else None
+
+    def __str__(self):
+        return f"Image {self.id} for {self.product.title}"
 
 
 class Order(BaseModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name='orders')
+    user = models.ForeignKey(get_user_model(),models.CASCADE, null=True,blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, related_name='orders')
     quantity = models.PositiveIntegerField(default=1, null=True, blank=True)
     first_payment = models.FloatField(null=True, blank=True, default=0)
     month = models.PositiveSmallIntegerField(default=3, null=True, blank=True,
                                              validators=[MinValueValidator(3), MaxValueValidator(12)])
 
+
     @property
     def monthly_payment(self):
         return self.product.price // self.month
 
     def __str__(self):
-        return f'{self.product.name} - {self.user.username} - {self.quantity}'
+        return f'{self.product.title} - {self.user.username} - {self.quantity}'
 
-
-class ProductImage(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='product_images/')
-    text = models.CharField(max_length=255)  # Ensure this field exists
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Image for {self.product.title}"
 
 class Comment(BaseModel):
     class RatingChoices(models.IntegerChoices):
@@ -106,21 +117,19 @@ class Comment(BaseModel):
     file = models.FileField(upload_to='comments/%Y/%m/%d/', null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='comments')
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, related_name='comments')
-    rating = models.PositiveSmallIntegerField(choices=RatingChoices.choices, default=RatingChoices.ZERO.value,null=True)
-    image = models.FileField(upload_to='comments', null=True, blank=True)
+    rating = models.PositiveSmallIntegerField(choices=RatingChoices.choices, default=RatingChoices.ZERO.value,
+                                              null=True)
 
     def __str__(self):
-        return self.product
+        return self.message
 
 
-class AttributeKey(BaseModel):
+class AttributeKey(models.Model):
     key_name = models.CharField(max_length=255, null=True, blank=True)
+
 
     def __str__(self):
         return self.key_name
-
-    class Meta:
-        db_table = 'attribute'
 
 
 class AttributeValue(BaseModel):
@@ -129,11 +138,8 @@ class AttributeValue(BaseModel):
     def __str__(self):
         return self.value_name
 
-    class Meta:
-        db_table = 'attribute_value'
 
-
-class ProductAttribute(BaseModel):
-    attribute = models.ForeignKey(AttributeKey, on_delete=models.CASCADE)
-    value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+class ProductAttribute(models.Model):
+    attr_key = models.ForeignKey(AttributeKey, on_delete=models.CASCADE, null=True, blank=True)
+    attr_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE, null=True, blank=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True,related_name='attributes')

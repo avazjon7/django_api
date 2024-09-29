@@ -40,7 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'book.apps.BookConfig',
     'olcha.apps.OlchaConfig',
+    'user.apps.UserConfig',
     'rest_framework',
+    'rest_framework.authentication'
 ]
 
 MIDDLEWARE = [
@@ -141,3 +143,5 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',
     ),
 }
+
+AUTH_USER_MODEL = 'book.User'
