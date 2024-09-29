@@ -1,14 +1,9 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
-from django.contrib.auth import authenticate
-from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
-from rest_framework import status, permissions, generics
-
+from rest_framework import permissions, status
+from rest_framework_simplejwt.tokens import RefreshToken
 from user.serializer import UserSerializer
-
-
-# Create your views here.
+from rest_framework import generics
 
 class UserRegisterApiView(generics.CreateAPIView):
     serializer_class = UserSerializer
@@ -17,28 +12,16 @@ class UserRegisterApiView(generics.CreateAPIView):
         user = serializer.save()
         return user
 
-
-class UserLoginApiView(APIView):
-    def post(self, request):
-        user = authenticate(username=request.data['username'], password=request.data['password'])
-        if user:
-            token, created = Token.objects.get_or_create(user=user)
-            response = {
-                'success': True,
-                'token': token.key,
-                'user': user.username,
-                'created': created
-
-            }
-            return Response(response, status=status.HTTP_200_OK)
-        else:
-            return Response({'error': 'Invalid credentials'}, status=401)
-
-
 class UserLogoutApiView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        token = Token.objects.get(user=request.user)
-        token.delete()
-        return Response({"success": True, "detail": "Logged out!"}, status=status.HTTP_200_OK)
+        try:
+
+            refresh_token = request.data["refresh_token"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+
+            return Response({"success": True, "detail": "Logged out!"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

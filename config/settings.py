@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'olcha.apps.OlchaConfig',
     'user.apps.UserConfig',
     'rest_framework',
-    'rest_framework.authentication'
+    'rest_framework.authentication',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
