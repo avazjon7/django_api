@@ -1,15 +1,17 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, OutstandingToken
 from user.serializer import UserSerializer
 from rest_framework import generics
 
 class UserRegisterApiView(generics.CreateAPIView):
+    permission_classes = (permissions.AllowAny,)
     serializer_class = UserSerializer
 
     def perform_create(self, serializer):
         user = serializer.save()
+
         return user
 
 class UserLogoutApiView(APIView):
