@@ -1,21 +1,16 @@
 from django.urls import path
-from olcha.views import category, group, product
-from olcha.views.product import (
-    AttributeKeyListApiView,
-    AttributeValueListApiView,
-    ProductAttributeListApiView
-)
+
+from olcha.views import product, category, group
 
 urlpatterns = [
-    path('categories/', category.CategoryListApiView.as_view(), name='categories'),
-    path('groups/', group.GroupListApiView.as_view(), name='groups'),
-    path('category/<slug:slug>/', category.CategoryDetailApiView.as_view(), name='category'),
-    path('all-products/', product.ProductListApiView.as_view(), name='all-products'),
-    path('all-images/', product.ImageListApiView.as_view(), name='all-products'),
-    path('all-comments/', product.CommentListApiView.as_view(), name='all-comments'),
-
-    # Attributes
-    path('attribute-keys/', AttributeKeyListApiView.as_view(), name='attribute-keys'),
-    path('attribute-values/', AttributeValueListApiView.as_view(), name='attribute-values'),
-    path('product-attributes/', ProductAttributeListApiView.as_view(), name='product-attributes'),
+    path('', category.CategoriesDetailListApiView.as_view(), name='categories-detail-list'),
+    path('category/<slug:slug>/', category.CategoryDetailApiView.as_view(), name='category-detail'),
+    path('add-category/', category.CategoryAddView.as_view(), name='add-category'),
+    path('category/<slug:category_slug>/<slug:slug>/', group.GroupDetailListApiView.as_view(),name='group-detail'),
+    path('add-group/', group.GroupAddView.as_view(), name='add-group'),
+    path('products/', product.ProductsListApiView.as_view(), name='products-list'),
+    path('product/view/<slug:slug>/', product.ProductDetailApiView.as_view(), name='product-detail'),
+    path('add-product/', product.ProductAddView.as_view(), name='add-product'),
+    path('product-attribute-key/', product.AttributeKeyListApiView.as_view(), name='product-attribute-key'),
+    path('product-attribute-value/', product.AttributeValueListApiView.as_view(), name='product-attribute-value'),
 ]
