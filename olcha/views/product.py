@@ -11,7 +11,7 @@ from olcha.serializer import (
 )
 from olcha.permission import IsOwnerOrReadOnly
 
-
+# dfg
 class ProductsListApiView(generics.ListCreateAPIView):
     permission_classes = [AllowAny,]
     queryset = Product.objects.all()
