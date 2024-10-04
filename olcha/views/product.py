@@ -1,4 +1,5 @@
 from rest_framework import generics, status, permissions
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.http import Http404
 from olcha.models import Product, AttributeKey, AttributeValue
@@ -12,7 +13,7 @@ from olcha.permission import IsOwnerOrReadOnly
 
 
 class ProductsListApiView(generics.ListCreateAPIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny,]
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
