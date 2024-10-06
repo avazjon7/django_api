@@ -21,7 +21,6 @@ from config import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('',include('book.urls')),
     path('api-auth/', include('rest_framework.urls')),
                   path('olcha.uz/', include('olcha.urls')),
                   path('olcha.uz/', include('user.urls')),
